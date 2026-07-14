@@ -633,7 +633,7 @@ function drawShadow(x,y,r){
 }
 
 function drawPlayer(p){
-  const img = p.team===TEAM.HOME ? IMG.player1 : IMG.player2;
+  const img = p.team===TEAM.HOME ? IMG[HOME_IMGS[p.idx % HOME_IMGS.length]] : IMG.player2;
   const isActive = (p===activePlayer && state==='playing');
   const running = Math.hypot(p.vx,p.vy)>40;
   const bob = running ? Math.sin(p.runPhase*2)*3 : 0;
@@ -783,10 +783,15 @@ resize();
 resetPositions(TEAM.HOME);
 loadImages([
   ['player1','assets/player1.png'],
+  ['player1_2','assets/player1.2.png'],
+  ['player1_3','assets/player1.3.png'],
   ['player2','assets/player2.png'],
   ['ball','assets/ball.png'],
   ['stadium','assets/stadium.png'],
 ]).then(()=>{ requestAnimationFrame(loop); });
+
+// distinct sprite for each home player (by formation index); AI team all share player2
+const HOME_IMGS = ['player1','player1_2','player1_3'];
 
 // goal flash keyframes injected
 const st=document.createElement('style');
