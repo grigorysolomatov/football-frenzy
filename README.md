@@ -1,12 +1,12 @@
 # ⚽ Football Frenzy
 
-A simple, good-looking arcade football (soccer) game that runs in the browser — playable on **PC, tablet and mobile**.
+A simple, good-looking three-a-side arcade football (soccer) game that runs in the browser — playable on **PC, tablet and mobile**.
 
 **▶ Play:** https://grigorysolomatov.github.io/football-frenzy/
 
 ## The game
 
-- **Six-a-side.** You control the **red** team, the CPU controls **yellow**.
+- **Three-a-side.** You control the **red** team, the CPU controls **yellow**.
 - **Two halves of 3 minutes each**, with a half-time break — just like a real 45'+45' match (scaled down).
 - **2D ball physics** — friction, wall bounces, kicks, dribbling and shooting.
 - **Steal mechanic:** if you touch an opponent who has the ball for **1 continuous second**, you win possession (a progress ring shows how close you are).

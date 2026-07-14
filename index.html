@@ -54,7 +54,7 @@
 
   /* Controls hint */
   #shootBtn{
-    position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
+    position:absolute; bottom:18px; left:18px;
     z-index:6; width:120px; height:64px; border-radius:16px; border:none;
     background:linear-gradient(180deg,#ffd34d,#f2a51c); color:#3a2600;
     font-size:18px; font-weight:800; letter-spacing:1px; cursor:pointer;
@@ -62,7 +62,7 @@
     display:flex; align-items:center; justify-content:center; overflow:hidden;
     transition:transform .05s;
   }
-  #shootBtn:active{ transform:translateX(-50%) translateY(3px); box-shadow:0 3px 0 #b97c10,0 6px 12px rgba(0,0,0,.4);}
+  #shootBtn:active{ transform:translateY(3px); box-shadow:0 3px 0 #b97c10,0 6px 12px rgba(0,0,0,.4);}
   #shootBtn .fill{ position:absolute; left:0; bottom:0; width:100%; background:rgba(255,255,255,.35); height:0%; pointer-events:none;}
   #shootBtn span{ position:relative; z-index:2;}
 
@@ -131,7 +131,7 @@
     <!-- Start -->
     <div id="startOverlay" class="overlay">
       <h1>⚽ FOOTBALL FRENZY</h1>
-      <p>Six-a-side arcade football. You control the <b style="color:var(--home)">red</b> team, the CPU controls <b style="color:var(--away)">yellow</b>. Two halves of 3 minutes each.</p>
+      <p>Three-a-side arcade football. You control the <b style="color:var(--home)">red</b> team, the CPU controls <b style="color:var(--away)">yellow</b>. Two halves of 3 minutes each.</p>
       <div class="legend">
         <div><span class="kbd">Move mouse / drag</span> steer active player</div>
         <div><span class="kbd">Click / Space / SHOOT</span> kick (hold = harder)</div>
@@ -222,11 +222,8 @@ let charge = 0, charging = false;
 // [xFraction, yFraction, role]
 const FORMATION = [
   [0.06, 0.50, 'gk'],
-  [0.26, 0.28, 'def'],
-  [0.26, 0.72, 'def'],
-  [0.45, 0.50, 'mid'],
-  [0.66, 0.30, 'fwd'],
-  [0.66, 0.70, 'fwd'],
+  [0.33, 0.35, 'mid'],
+  [0.60, 0.65, 'fwd'],
 ];
 
 function makePlayers(){
