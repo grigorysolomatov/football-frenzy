@@ -866,15 +866,19 @@ document.getElementById('ftBtn').onclick=startMatch;
 // ============================================================
 resize();
 resetPositions(TEAM.HOME);
+// bump ASSET_V whenever an image in assets/ is replaced so mobile browsers
+// (which cache same-URL images stubbornly) fetch the new file immediately
+const ASSET_V = '2';
+function asset(path){ return path+'?v='+ASSET_V; }
 loadImages([
-  ['player1','assets/player1.png'],
-  ['player1_2','assets/player1.2.png'],
-  ['player1_3','assets/player1.3.png'],
-  ['player2','assets/player2.png'],
-  ['goalie1','assets/goalie1.png'],
-  ['goalie2','assets/goalie2.png'],
-  ['ball','assets/ball.png'],
-  ['stadium','assets/stadium.png'],
+  ['player1',asset('assets/player1.png')],
+  ['player1_2',asset('assets/player1.2.png')],
+  ['player1_3',asset('assets/player1.3.png')],
+  ['player2',asset('assets/player2.png')],
+  ['goalie1',asset('assets/goalie1.png')],
+  ['goalie2',asset('assets/goalie2.png')],
+  ['ball',asset('assets/ball.png')],
+  ['stadium',asset('assets/stadium.png')],
 ]).then(()=>{ requestAnimationFrame(loop); });
 
 // distinct sprite for each home player (by formation index); AI team all share player2
