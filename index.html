@@ -66,6 +66,28 @@
   #shootBtn .fill{ position:absolute; left:0; bottom:0; width:100%; background:rgba(255,255,255,.35); height:0%; pointer-events:none;}
   #shootBtn span{ position:relative; z-index:2;}
 
+  /* Goalie D-pad */
+  #goaliePad{
+    position:absolute; bottom:14px; right:14px; z-index:6;
+    width:130px; height:130px;
+    display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:repeat(3,40px);
+    gap:4px; justify-content:center; align-content:center;
+  }
+  #goaliePad button{
+    border:none; border-radius:10px; cursor:pointer;
+    background:linear-gradient(180deg,#8fd6ff,#3f9fe0); color:#08213f;
+    font-size:16px; font-weight:800;
+    box-shadow:0 4px 0 #1c72b8, 0 6px 12px rgba(0,0,0,.35);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .05s; touch-action:none;
+  }
+  #goaliePad button:active, #goaliePad button.pressed{ transform:translateY(2px); box-shadow:0 2px 0 #1c72b8;}
+  #goaliePad .gp-up{grid-column:2;grid-row:1;}
+  #goaliePad .gp-left{grid-column:1;grid-row:2;}
+  #goaliePad .gp-label{grid-column:2;grid-row:2; display:flex; align-items:center; justify-content:center; font-size:9px; opacity:.75; letter-spacing:.5px; text-shadow:0 1px 3px #000;}
+  #goaliePad .gp-right{grid-column:3;grid-row:2;}
+  #goaliePad .gp-down{grid-column:2;grid-row:3;}
+
   #hint{
     position:absolute; bottom:92px; left:50%; transform:translateX(-50%);
     z-index:6; font-size:12px; opacity:.7; text-align:center; width:90%;
@@ -123,8 +145,16 @@
       <div class="team"><span class="swatch" style="background:var(--away)"></span>CPU</div>
     </div>
 
-    <div id="hint">Steer the highlighted player toward your pointer · release SHOOT to kick</div>
+    <div id="hint">Steer the highlighted player toward your pointer · release SHOOT to kick · arrows move your goalie</div>
     <button id="shootBtn"><div class="fill"></div><span>SHOOT</span></button>
+
+    <div id="goaliePad">
+      <button class="gp-up" data-dir="up">▲</button>
+      <button class="gp-left" data-dir="left">◀</button>
+      <div class="gp-label">GK</div>
+      <button class="gp-right" data-dir="right">▶</button>
+      <button class="gp-down" data-dir="down">▼</button>
+    </div>
 
     <div id="goalFlash" class="goalFlash">GOAL!</div>
 
@@ -135,6 +165,7 @@
       <div class="legend">
         <div><span class="kbd">Move mouse / drag</span> steer active player</div>
         <div><span class="kbd">Click / Space / SHOOT</span> kick (hold = harder)</div>
+        <div><span class="kbd">Arrow keys / GK pad</span> move your goalie</div>
       </div>
       <p style="font-size:13px;opacity:.7">The game auto-selects the red player nearest the ball. Touch an opponent who has the ball for 1 second to steal it.</p>
       <button class="btn" id="startBtn">KICK OFF</button>
@@ -263,10 +294,11 @@ function resetPositions(kickTeam){
 // ============================================================
 //  UPDATE
 // ============================================================
-function nearestOfTeamToBall(team){
+function nearestOfTeamToBall(team, excludeGk){
   let best=null,bd=1e9;
   for(const p of players){
     if(p.team!==team) continue;
+    if(excludeGk && p.role==='gk') continue;
     const d=dist2(p,ball);
     if(d<bd){bd=d;best=p;}
   }
@@ -295,6 +327,11 @@ function updatePlayerMotion(p, dt){
   const m=PLAYER_R+2;
   if(p.x<m){p.x=m;p.vx*=-.3;} if(p.x>W-m){p.x=W-m;p.vx*=-.3;}
   if(p.y<m){p.y=m;p.vy*=-.3;} if(p.y>H-m){p.y=H-m;p.vy*=-.3;}
+  // the player-controlled goalie is kept within the home penalty box
+  if(p.team===TEAM.HOME && p.role==='gk'){
+    if(p.x<GK_BOX.xMin){p.x=GK_BOX.xMin;p.vx=0;} if(p.x>GK_BOX.xMax){p.x=GK_BOX.xMax;p.vx=0;}
+    if(p.y<GK_BOX.yMin){p.y=GK_BOX.yMin;p.vy=0;} if(p.y>GK_BOX.yMax){p.y=GK_BOX.yMax;p.vy=0;}
+  }
   const sp=Math.hypot(p.vx,p.vy);
   if(sp>4){ p.faceX=p.vx/sp; p.faceY=p.vy/sp; p.runPhase+=dt*sp*0.05; }
 }
@@ -396,18 +433,43 @@ function nearestOppTo(p){
 
 // --- Human control of active player ---
 function humanControl(dt){
-  // active = home player nearest ball (or owner if home owns)
-  if(ball.owner && ball.owner.team===TEAM.HOME) activePlayer = ball.owner;
-  else activePlayer = nearestOfTeamToBall(TEAM.HOME);
+  // active = home outfield player nearest ball (or owner if home owns) — the goalie is
+  // steered separately via the arrow pad, so it's excluded from auto-selection.
+  if(ball.owner && ball.owner.team===TEAM.HOME && ball.owner.role!=='gk') activePlayer = ball.owner;
+  else activePlayer = nearestOfTeamToBall(TEAM.HOME, true);
 
   for(const p of players){
     if(p.team!==TEAM.HOME) continue;
-    if(p===activePlayer){
+    if(p.role==='gk'){
+      humanGoalieControl(p, dt);
+    } else if(p===activePlayer){
       const speed = (ball.owner===p)?SPEED.humanBall:SPEED.human;
       moveToward(p, pointer.x, pointer.y, speed, dt);
     } else {
       aiControl(p, dt);      // teammates run automatically
     }
+  }
+}
+
+// Player-controlled goalkeeper: driven directly by the on-screen arrow pad / keyboard arrows,
+// kept inside the home penalty box so it plays like a keeper rather than a free outfielder.
+const goalieInput = { up:false, down:false, left:false, right:false };
+const GK_BOX = { xMin:14, xMax:14+120, yMin:(H-300)/2, yMax:(H-300)/2+300 };
+function humanGoalieControl(p, dt){
+  let dx=0, dy=0;
+  if(goalieInput.left) dx-=1;
+  if(goalieInput.right) dx+=1;
+  if(goalieInput.up) dy-=1;
+  if(goalieInput.down) dy+=1;
+  const speed = (ball.owner===p) ? SPEED.humanBall : SPEED.human;
+  if(dx||dy){
+    const len=Math.hypot(dx,dy);
+    const desVx=dx/len*speed, desVy=dy/len*speed;
+    const accel=14*dt;
+    p.vx += (desVx-p.vx)*Math.min(1,accel);
+    p.vy += (desVy-p.vy)*Math.min(1,accel);
+  } else {
+    p.vx*=0.8; p.vy*=0.8;
   }
 }
 
@@ -633,7 +695,9 @@ function drawShadow(x,y,r){
 }
 
 function drawPlayer(p){
-  const img = p.team===TEAM.HOME ? IMG[HOME_IMGS[p.idx % HOME_IMGS.length]] : IMG.player2;
+  const img = p.role==='gk'
+    ? (p.team===TEAM.HOME ? IMG.goalie1 : IMG.goalie2)
+    : (p.team===TEAM.HOME ? IMG[HOME_IMGS[p.idx % HOME_IMGS.length]] : IMG.player2);
   const isActive = (p===activePlayer && state==='playing');
   const running = Math.hypot(p.vx,p.vy)>40;
   const bob = running ? Math.sin(p.runPhase*2)*3 : 0;
@@ -739,6 +803,27 @@ window.addEventListener('keyup',e=>{
   if(e.code==='Space'){ e.preventDefault(); if(state==='playing') releaseCharge(); }
 });
 
+// on-screen goalie D-pad
+const ARROW_KEY_DIR = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right' };
+document.querySelectorAll('#goaliePad button[data-dir]').forEach(btn=>{
+  const dir = btn.dataset.dir;
+  const press = e=>{ e.preventDefault(); goalieInput[dir]=true; btn.classList.add('pressed'); };
+  const release = e=>{ e.preventDefault(); goalieInput[dir]=false; btn.classList.remove('pressed'); };
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointerleave', release);
+  btn.addEventListener('pointercancel', release);
+});
+// keyboard arrows also drive the goalie
+window.addEventListener('keydown',e=>{
+  const dir = ARROW_KEY_DIR[e.code] || ARROW_KEY_DIR[e.key];
+  if(dir){ e.preventDefault(); goalieInput[dir]=true; }
+});
+window.addEventListener('keyup',e=>{
+  const dir = ARROW_KEY_DIR[e.code] || ARROW_KEY_DIR[e.key];
+  if(dir){ e.preventDefault(); goalieInput[dir]=false; }
+});
+
 function startCharge(){ charging=true; charge=0.35; }
 function updateCharge(dt){
   if(charging){ charge=Math.min(1, charge+dt*1.1); }
@@ -749,9 +834,9 @@ function releaseCharge(){
   if(!charging) return;
   charging=false;
   const power = SPEED.pass + (SPEED.shoot-SPEED.pass)*charge;
-  // only the human active player, and only if they hold the ball
-  if(activePlayer && ball.owner===activePlayer){
-    kickBall(activePlayer, pointer.x, pointer.y, power);
+  // any human-controlled player (active outfielder or the arrow-controlled goalie) can clear the ball
+  if(ball.owner && ball.owner.team===TEAM.HOME){
+    kickBall(ball.owner, pointer.x, pointer.y, power);
   }
   charge=0;
   shootBtn.querySelector('.fill').style.height='0%';
@@ -786,6 +871,8 @@ loadImages([
   ['player1_2','assets/player1.2.png'],
   ['player1_3','assets/player1.3.png'],
   ['player2','assets/player2.png'],
+  ['goalie1','assets/goalie1.png'],
+  ['goalie2','assets/goalie2.png'],
   ['ball','assets/ball.png'],
   ['stadium','assets/stadium.png'],
 ]).then(()=>{ requestAnimationFrame(loop); });

@@ -19,9 +19,12 @@ The game **auto-selects the red player nearest the ball** (highlighted with a da
 |---|---|---|
 | Move active player | Move the mouse | Drag your finger on the pitch |
 | Kick / shoot / pass | Click, or hold **Space** | Hold the **SHOOT** button |
+| Move your goalie | Arrow keys | GK arrow pad (bottom-right) |
 | Power | Hold longer = harder | Hold longer = harder |
 
 The ball is kicked **toward your pointer**, so aim where you want it to go. A short tap makes a soft pass; a long hold blasts a shot.
+
+Your goalkeeper is steered separately from your outfield player — using the arrow keys or the on-screen **GK** pad — and stays inside your penalty box. The CPU's goalkeeper always plays automatically.
 
 ## AI
 
