@@ -19,7 +19,7 @@ The game **auto-selects the red player nearest the ball** (highlighted with a da
 |---|---|---|
 | Move active player | Move the mouse | Drag your finger on the pitch |
 | Kick / shoot / pass | Click, or hold **Space** | Hold the **SHOOT** button |
-| Move your goalie | Arrow keys | GK arrow pad (bottom-right) |
+| Move your goalie | Arrow keys | GK arrow pad (bottom-left) |
 | Power | Hold longer = harder | Hold longer = harder |
 
 The ball is kicked **toward your pointer**, so aim where you want it to go. A short tap makes a soft pass; a long hold blasts a shot.
